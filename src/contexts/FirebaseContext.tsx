@@ -89,13 +89,42 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (userSnap.exists()) {
         const data = userSnap.data();
-        setUser({
+        const tgUser = getTelegramUser();
+        let updatedAge = data.accountAge;
+        let updatedCoins = data.coins;
+        let updatedPoints = data.totalPoints;
+        let needsUpdate = false;
+
+        // If the user was created with default data (age 5) but we now have real TG data, update it
+        if (tgUser && (data.accountAge === 5 || !data.accountAge)) {
+          const realAge = estimateAccountAge(tgUser.id);
+          if (realAge !== data.accountAge) {
+            updatedAge = realAge;
+            const coinDiff = (realAge - (data.accountAge || 0)) * 1000;
+            updatedCoins = (data.coins || 0) + coinDiff;
+            updatedPoints = (data.totalPoints || 0) + coinDiff;
+            needsUpdate = true;
+          }
+        }
+
+        const updatedUserState = {
           ...data,
+          accountAge: updatedAge,
+          coins: updatedCoins,
+          totalPoints: updatedPoints,
           completedTasks: data.completedTasks || []
-        } as UserState);
+        } as UserState;
+
+        setUser(updatedUserState);
         
-        // Update last login (non-blocking)
-        updateDoc(userRef, { lastLogin: serverTimestamp() }).catch(e => console.warn("Failed to update last login:", e));
+        // Update last login and potentially account age (non-blocking)
+        const updates: any = { lastLogin: serverTimestamp() };
+        if (needsUpdate) {
+          updates.accountAge = updatedAge;
+          updates.coins = updatedCoins;
+          updates.totalPoints = updatedPoints;
+        }
+        updateDoc(userRef, updates).catch(e => console.warn("Failed to update user data:", e));
       } else {
         // Initial setup for new user
         const tgUser = getTelegramUser();

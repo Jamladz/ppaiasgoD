@@ -11,6 +11,7 @@ export interface TelegramUser {
 export const getTelegramUser = (): TelegramUser | null => {
   // @ts-ignore
   const webApp = window.Telegram?.WebApp;
+  console.log("Telegram WebApp User:", webApp?.initDataUnsafe?.user);
   if (webApp?.initDataUnsafe?.user) {
     return webApp.initDataUnsafe.user;
   }
@@ -24,15 +25,16 @@ export const getStartParam = (): string | null => {
 };
 
 export const estimateAccountAge = (userId: number): number => {
-  // Very rough heuristic for Telegram user IDs
-  if (userId < 50_000_000) return 11;
-  if (userId < 100_000_000) return 10;
-  if (userId < 200_000_000) return 9;
-  if (userId < 400_000_000) return 8;
-  if (userId < 600_000_000) return 7;
-  if (userId < 900_000_000) return 6;
-  if (userId < 1_300_000_000) return 5;
-  if (userId < 1_800_000_000) return 4;
-  if (userId < 5_000_000_000) return 2;
-  return 1;
+  // More accurate heuristic based on Telegram historical ID ranges
+  if (userId < 100_000_000) return 11;    // 2013-2014
+  if (userId < 250_000_000) return 10;    // 2015
+  if (userId < 450_000_000) return 9;     // 2016
+  if (userId < 750_000_000) return 8;     // 2017
+  if (userId < 1_000_000_000) return 7;   // 2018
+  if (userId < 1_400_000_000) return 6;   // 2019
+  if (userId < 2_000_000_000) return 5;   // 2020
+  if (userId < 4_000_000_000) return 4;   // 2021
+  if (userId < 6_000_000_000) return 3;   // 2022
+  if (userId < 7_500_000_000) return 2;   // 2023
+  return 1; // 2024-2025
 };
