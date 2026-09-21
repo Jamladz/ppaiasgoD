@@ -1,0 +1,6 @@
+{
+  "name": "Dogs Ai",
+  "description": "A Telegram-style mini app for Dogs Ai, featuring account age calculation, rewards, and a task dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

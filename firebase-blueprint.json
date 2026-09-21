@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Telegram user profile and rewards data",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string", "maxLength": 100 },
+        "initials": { "type": "string", "maxLength": 5 },
+        "accountAge": { "type": "number" },
+        "coins": { "type": "number" },
+        "isPremium": { "type": "boolean" },
+        "premiumBonus": { "type": "number" },
+        "totalPoints": { "type": "number" },
+        "onboardingCompleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastLogin": { "type": "string", "format": "date-time" }
+      },
+      "required": ["username", "totalPoints"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "User task completion status",
+      "type": "object",
+      "properties": {
+        "taskId": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["taskId", "completed"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile and cumulative rewards"
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Tracks specific task completion per user"
+    }
+  }
+}

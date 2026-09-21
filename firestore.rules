@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for User entity
+    function isValidUser(data) {
+      return data.username is string && data.username.size() <= 100
+          && data.totalPoints is number
+          && (data.accountAge is number || !data.keys().hasAny(['accountAge']))
+          && (data.coins is number || !data.keys().hasAny(['coins']))
+          && (data.isPremium is bool || !data.keys().hasAny(['isPremium']))
+          && (data.premiumBonus is number || !data.keys().hasAny(['premiumBonus']))
+          && (data.onboardingCompleted is bool || !data.keys().hasAny(['onboardingCompleted']))
+          && data.keys().hasOnly(['username', 'initials', 'accountAge', 'coins', 'isPremium', 'premiumBonus', 'totalPoints', 'onboardingCompleted', 'createdAt', 'lastLogin']);
+    }
+
+    // Validation for Task entity
+    function isValidTask(data) {
+      return data.taskId is string && data.taskId.size() <= 128
+          && data.completed is bool
+          && (data.completedAt == request.time || !data.keys().hasAny(['completedAt']))
+          && data.keys().hasOnly(['taskId', 'completed', 'completedAt']);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().createdAt == request.time;
+      allow update: if isOwner(userId) && isValidUser(incoming()) 
+                   && incoming().createdAt == existing().createdAt
+                   && incoming().lastLogin == request.time;
+      
+      match /tasks/{taskId} {
+        allow list, get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidTask(incoming()) && isValidId(taskId);
+      }
+    }
+  }
+}
