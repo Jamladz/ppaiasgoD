@@ -39,13 +39,19 @@ export default function MainApp({ user }: MainAppProps) {
   }, [user.lastCheckIn]);
   
   useEffect(() => {
-    const unsubscribe = tonConnectUI.onStatusChange((wallet) => {
+    const unsubscribe = tonConnectUI.onStatusChange(async (wallet) => {
       if (wallet?.account.address) {
-        updateWalletAddress(wallet.account.address);
+        await updateWalletAddress(wallet.account.address);
+        const completedTasks = user.completedTasks || [];
+        if (!completedTasks.includes('wallet')) {
+          await completeTask('wallet', 5000);
+        }
+      } else {
+        await updateWalletAddress('');
       }
     });
     return () => unsubscribe();
-  }, [tonConnectUI, updateWalletAddress]);
+  }, [tonConnectUI, updateWalletAddress, completeTask, user.completedTasks]);
 
   const referralLink = `https://t.me/DogsAIApp_bot?start=ref_${user.uid}`;
 

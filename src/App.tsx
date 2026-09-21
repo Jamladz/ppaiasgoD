@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useEffect } from 'react';
 import { useFirebase } from './contexts/FirebaseContext';
 import Onboarding from './components/Onboarding';
 import MainApp from './components/MainApp';
@@ -10,6 +11,28 @@ import { LogIn, Loader2 } from 'lucide-react';
 
 export default function App() {
   const { user, loading, error, signIn, completeOnboarding } = useFirebase();
+
+  useEffect(() => {
+    // Official Telegram Mini App Fullscreen & Ready Initialization
+    // @ts-ignore
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      try {
+        tg.ready();
+        tg.expand();
+        if (typeof tg.requestFullscreen === 'function') {
+          tg.requestFullscreen();
+        }
+        tg.setHeaderColor('#09090b');
+        tg.setBackgroundColor('#09090b');
+        if (typeof tg.enableClosingConfirmation === 'function') {
+          tg.enableClosingConfirmation();
+        }
+      } catch (e) {
+        console.log("Telegram WebApp initialization error:", e);
+      }
+    }
+  }, []);
 
   if (loading) {
     return (

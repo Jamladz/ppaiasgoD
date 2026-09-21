@@ -1,7 +1,8 @@
 
 import { motion } from 'motion/react';
 import { UserState } from '../types';
-import { X, Settings, ShieldCheck, Wallet } from 'lucide-react';
+import { X, Settings, ShieldCheck, Wallet, ExternalLink, LogOut } from 'lucide-react';
+import { useTonConnectUI } from '@tonconnect/ui-react';
 
 interface ProfileProps {
   user: UserState;
@@ -9,6 +10,16 @@ interface ProfileProps {
 }
 
 export default function Profile({ user, onClose }: ProfileProps) {
+  const [tonConnectUI] = useTonConnectUI();
+
+  const handleWalletAction = () => {
+    if (user.walletAddress) {
+      tonConnectUI.disconnect();
+    } else {
+      tonConnectUI.openModal();
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: '100%' }}
@@ -38,17 +49,23 @@ export default function Profile({ user, onClose }: ProfileProps) {
         </p>
 
         <div className="w-full max-w-sm space-y-4">
-          <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-[32px] p-5 sm:p-6 flex items-center justify-between backdrop-blur-xl">
+          <div 
+            onClick={handleWalletAction}
+            className="bg-zinc-900/40 hover:bg-zinc-800/60 border border-zinc-800/50 rounded-[32px] p-5 sm:p-6 flex items-center justify-between backdrop-blur-xl cursor-pointer transition-all group"
+          >
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-zinc-800/50 rounded-2xl flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-sky-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-sky-400" />
               </div>
               <div>
                 <div className="font-black text-sm">TON Wallet</div>
                 <div className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mt-0.5">
-                  {user.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : 'Not Connected'}
+                  {user.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : 'Tap to Connect'}
                 </div>
               </div>
+            </div>
+            <div className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${user.walletAddress ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white text-black'}`}>
+              {user.walletAddress ? 'Connected' : 'Connect'}
             </div>
           </div>
 
