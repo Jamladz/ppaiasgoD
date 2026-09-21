@@ -1,6 +1,6 @@
 
 import { motion } from 'motion/react';
-import { Calendar, CheckCircle2, Star } from 'lucide-react';
+import { Calendar, CheckCircle2, Star, Sparkles } from 'lucide-react';
 
 interface DailyCheckInProps {
   streakCount: number;
@@ -63,16 +63,24 @@ export default function DailyCheckIn({ streakCount, onCheckIn, onClose }: DailyC
             </div>
           </div>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.01, y: -2 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => {
               onCheckIn();
               onClose();
             }}
-            className="w-full bg-white text-black py-4.5 rounded-2xl font-black text-lg uppercase tracking-wider active:scale-95 transition-transform shadow-[0_20px_40px_rgba(255,255,255,0.1)] flex items-center justify-center gap-3"
+            className="w-full relative group outline-none"
           >
-            <CheckCircle2 className="w-5 h-5" />
-            Claim Reward
-          </button>
+            <div className="absolute -inset-0.5 bg-gradient-to-b from-white/20 to-transparent rounded-[24px] blur-md opacity-0 group-hover:opacity-100 transition duration-500" />
+            <div className="relative w-full bg-white text-black py-4 sm:py-5 rounded-[22px] font-black text-base sm:text-lg uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(255,255,255,0.15)] transition-all duration-300">
+              <Sparkles className="w-4 h-4 text-black/40" />
+              <span>Check-In</span>
+              <div className="w-6 h-6 bg-black/5 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 text-black" />
+              </div>
+            </div>
+          </motion.button>
         </div>
       </motion.div>
     </motion.div>
