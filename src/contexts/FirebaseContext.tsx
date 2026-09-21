@@ -54,6 +54,7 @@ interface FirebaseContextType {
   completeOnboarding: () => Promise<void>;
   updateWalletAddress: (address: string) => Promise<void>;
   completeTask: (taskId: string, reward: number) => Promise<void>;
+  checkIn: () => Promise<void>;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -112,7 +113,9 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           accountAge: updatedAge,
           coins: updatedCoins,
           totalPoints: updatedPoints,
-          completedTasks: data.completedTasks || []
+          completedTasks: data.completedTasks || [],
+          streakCount: data.streakCount || 0,
+          lastCheckIn: data.lastCheckIn || null
         } as UserState;
 
         setUser(updatedUserState);
@@ -172,7 +175,9 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           referredBy: referredBy || undefined,
           referralCount: 0,
           walletAddress: '',
-          completedTasks: []
+          completedTasks: [],
+          streakCount: 0,
+          lastCheckIn: null
         };
 
         const dataToSave = {
@@ -301,8 +306,50 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const checkIn = async () => {
+    if (!auth.currentUser || !user) return;
+    try {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      const now = new Date();
+      const lastCheckInDate = user.lastCheckIn ? (user.lastCheckIn.toDate ? user.lastCheckIn.toDate() : new Date(user.lastCheckIn)) : null;
+      
+      let newStreak = 1;
+      const reward = 500; // Base daily reward
+
+      if (lastCheckInDate) {
+        const diffInHours = (now.getTime() - lastCheckInDate.getTime()) / (1000 * 60 * 60);
+        
+        if (diffInHours < 24) return; // Already checked in
+        
+        if (diffInHours < 48) {
+          newStreak = (user.streakCount || 0) + 1;
+        } else {
+          newStreak = 1;
+        }
+      }
+
+      const totalReward = reward + (newStreak * 50); // Streak bonus
+
+      await updateDoc(userRef, {
+        streakCount: newStreak,
+        lastCheckIn: serverTimestamp(),
+        totalPoints: increment(totalReward),
+        lastLogin: serverTimestamp()
+      });
+
+      setUser({
+        ...user,
+        streakCount: newStreak,
+        lastCheckIn: now,
+        totalPoints: user.totalPoints + totalReward
+      });
+    } catch (err) {
+      console.error("Error during check-in:", err);
+    }
+  };
+
   return (
-    <FirebaseContext.Provider value={{ user, loading, error, signIn, completeOnboarding, updateWalletAddress, completeTask }}>
+    <FirebaseContext.Provider value={{ user, loading, error, signIn, completeOnboarding, updateWalletAddress, completeTask, checkIn }}>
       {children}
     </FirebaseContext.Provider>
   );

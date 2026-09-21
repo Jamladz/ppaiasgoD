@@ -5,6 +5,7 @@ import { UserState, Tab, Task } from '../types';
 import Header from './Header';
 import Navigation from './Navigation';
 import Profile from './Profile';
+import DailyCheckIn from './DailyCheckIn';
 import { CheckCircle2, Circle, TrendingUp, Trophy, Users, Copy, Share2, UserPlus, Wallet } from 'lucide-react';
 import { useTonConnectUI } from '@tonconnect/ui-react';
 import { useFirebase } from '../contexts/FirebaseContext';
@@ -18,8 +19,24 @@ export default function MainApp({ user }: MainAppProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [tonConnectUI] = useTonConnectUI();
-  const { updateWalletAddress, completeTask } = useFirebase();
+  const { updateWalletAddress, completeTask, checkIn } = useFirebase();
   const [verifyingTasks, setVerifyingTasks] = useState<string[]>([]);
+  const [isCheckInOpen, setIsCheckInOpen] = useState(false);
+
+  useEffect(() => {
+    // Check if user is eligible for check-in
+    const now = new Date();
+    const lastCheckInDate = user.lastCheckIn ? (user.lastCheckIn.toDate ? user.lastCheckIn.toDate() : new Date(user.lastCheckIn)) : null;
+    
+    if (!lastCheckInDate) {
+      setIsCheckInOpen(true);
+    } else {
+      const diffInHours = (now.getTime() - lastCheckInDate.getTime()) / (1000 * 60 * 60);
+      if (diffInHours >= 24) {
+        setIsCheckInOpen(true);
+      }
+    }
+  }, [user.lastCheckIn]);
   
   useEffect(() => {
     const unsubscribe = tonConnectUI.onStatusChange((wallet) => {
@@ -123,7 +140,7 @@ export default function MainApp({ user }: MainAppProps) {
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                   <span className="text-[9px] text-zinc-500 uppercase font-black tracking-wider">Streak</span>
                 </div>
-                <div className="text-xl font-black">5 Days</div>
+                <div className="text-xl font-black">{user.streakCount || 0} Days</div>
               </div>
               <div className="bg-zinc-900/40 border border-zinc-800/50 p-6 rounded-[28px] backdrop-blur-xl">
                 <div className="flex items-center gap-2 mb-2.5">
@@ -269,6 +286,16 @@ export default function MainApp({ user }: MainAppProps) {
           <Profile 
             user={user} 
             onClose={() => setIsProfileOpen(false)} 
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isCheckInOpen && (
+          <DailyCheckIn 
+            streakCount={user.streakCount || 0}
+            onCheckIn={checkIn}
+            onClose={() => setIsCheckInOpen(false)}
           />
         )}
       </AnimatePresence>

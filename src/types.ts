@@ -16,6 +16,8 @@ export interface UserState {
   referralCount: number;
   walletAddress?: string;
   completedTasks: string[];
+  streakCount: number;
+  lastCheckIn?: any; // Firebase Timestamp or ISO string
 }
 
 export interface Task {
