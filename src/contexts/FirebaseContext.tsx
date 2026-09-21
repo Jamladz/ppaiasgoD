@@ -28,8 +28,11 @@ interface FirestoreErrorInfo {
 }
 
 const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
+  const code = (error as any)?.code || 'unknown';
+  const message = error instanceof Error ? error.message : String(error);
+  
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: message,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -40,7 +43,7 @@ const handleFirestoreError = (error: unknown, operationType: OperationType, path
     path
   };
   console.error('Firestore Error:', JSON.stringify(errInfo));
-  return "Failed to sync with database.";
+  return `Failed to sync with database (${code}).`;
 };
 
 interface FirebaseContextType {
@@ -106,6 +109,9 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (startParam && startParam.startsWith('ref_')) {
           referredBy = startParam.replace('ref_', '');
         }
+        
+        // Safety check for referral ID format
+        const isValidRef = referredBy && /^[a-zA-Z0-9_\-]+$/.test(referredBy);
 
         const newUser: UserState = {
           uid: firebaseUser.uid,
@@ -130,7 +136,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         });
 
         // Credit the inviter if applicable
-        if (referredBy && referredBy !== firebaseUser.uid) {
+        if (isValidRef && referredBy && referredBy !== firebaseUser.uid) {
           const inviterRef = doc(db, 'users', referredBy);
           try {
             const inviterSnap = await getDoc(inviterRef);

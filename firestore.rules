@@ -28,42 +28,31 @@ service cloud.firestore {
       return resource.data;
     }
 
-    // Validation for User entity
-    function isValidUser(data) {
+    // Validation for User creation
+    function isValidNewUser(data) {
       return data.username is string && data.username.size() <= 100
           && data.totalPoints is number
-          && (data.initials is string || !data.keys().hasAny(['initials']))
-          && (data.accountAge is number || !data.keys().hasAny(['accountAge']))
-          && (data.coins is number || !data.keys().hasAny(['coins']))
-          && (data.isPremium is bool || !data.keys().hasAny(['isPremium']))
-          && (data.premiumBonus is number || !data.keys().hasAny(['premiumBonus']))
-          && (data.onboardingCompleted is bool || !data.keys().hasAny(['onboardingCompleted']))
-          && (data.uid is string || !data.keys().hasAny(['uid']))
-          && (data.referredBy is string || !data.keys().hasAny(['referredBy']))
-          && (data.referralCount is number || !data.keys().hasAny(['referralCount']))
-          && (data.walletAddress is string || !data.keys().hasAny(['walletAddress']))
-          && (data.completedTasks is list || !data.keys().hasAny(['completedTasks']))
-          && data.keys().hasOnly(['username', 'initials', 'accountAge', 'coins', 'isPremium', 'premiumBonus', 'totalPoints', 'onboardingCompleted', 'uid', 'referredBy', 'referralCount', 'walletAddress', 'completedTasks', 'createdAt', 'lastLogin']);
-    }
-
-    // Validation for Task entity
-    function isValidTask(data) {
-      return data.taskId is string && data.taskId.size() <= 128
-          && data.completed is bool
-          && (data.completedAt == request.time || !data.keys().hasAny(['completedAt']))
-          && data.keys().hasOnly(['taskId', 'completed', 'completedAt']);
+          && (data.uid == request.auth.uid);
     }
 
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().createdAt == request.time;
-      allow update: if isOwner(userId) && isValidUser(incoming()) 
-                   && incoming().createdAt == existing().createdAt
-                   && incoming().lastLogin == request.time;
+      // Allow any signed-in user to check if an inviter exists
+      allow get: if isSignedIn();
+      allow list: if isSignedIn(); // Allow leaderboard
+
+      allow create: if isOwner(userId) && isValidNewUser(incoming()) && incoming().createdAt == request.time;
+      
+      allow update: if isSignedIn() && (
+        // Action 1: Owner updates their profile (lastLogin, onboarding, wallet, tasks)
+        (isOwner(userId) && incoming().lastLogin == request.time) ||
+        
+        // Action 2: Referral credit (another user increments points/count)
+        (incoming().diff(existing()).affectedKeys().hasOnly(['referralCount', 'totalPoints']))
+      );
       
       match /tasks/{taskId} {
         allow list, get: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidTask(incoming()) && isValidId(taskId);
+        allow create, update: if isOwner(userId) && isValidId(taskId);
       }
     }
   }
