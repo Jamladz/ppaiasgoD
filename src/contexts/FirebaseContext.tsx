@@ -158,11 +158,20 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           completedTasks: []
         };
 
-        await setDoc(userRef, {
+        const dataToSave = {
           ...newUser,
           createdAt: serverTimestamp(),
           lastLogin: serverTimestamp()
+        };
+
+        // Remove undefined fields to prevent 'invalid-argument'
+        Object.keys(dataToSave).forEach(key => {
+          if ((dataToSave as any)[key] === undefined) {
+            delete (dataToSave as any)[key];
+          }
         });
+
+        await setDoc(userRef, dataToSave);
 
         // Credit the inviter if applicable
         if (isValidRef && referredBy && referredBy !== firebaseUser.uid) {
@@ -184,7 +193,11 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       setError(null); // Clear any previous errors on success
     } catch (err: any) {
-      console.error("Database sync error:", err);
+      console.error("Database sync error details:", err);
+      // Detailed error logging for invalid-argument
+      if (err.code === 'invalid-argument') {
+        console.error("Invalid Argument in Firestore call. Check document structure.");
+      }
       // Specific handling for common issues
       if (err.code === 'permission-denied') {
         setError("Access denied. Please restart the app.");
