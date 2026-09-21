@@ -17,7 +17,7 @@ export default function Profile({ user, onClose }: ProfileProps) {
       transition={{ type: "spring", damping: 30, stiffness: 300 }}
       className="fixed inset-0 z-40 bg-zinc-950 flex flex-col max-h-screen overflow-hidden pb-32"
     >
-      <div className="flex items-center justify-between px-6 py-6 sm:py-8">
+      <div className="flex items-center justify-between px-6 pt-12 pb-6 sm:py-8">
         <h2 className="text-3xl font-black tracking-tight">Account</h2>
         <button 
           onClick={onClose}
