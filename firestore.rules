@@ -32,12 +32,18 @@ service cloud.firestore {
     function isValidUser(data) {
       return data.username is string && data.username.size() <= 100
           && data.totalPoints is number
+          && (data.initials is string || !data.keys().hasAny(['initials']))
           && (data.accountAge is number || !data.keys().hasAny(['accountAge']))
           && (data.coins is number || !data.keys().hasAny(['coins']))
           && (data.isPremium is bool || !data.keys().hasAny(['isPremium']))
           && (data.premiumBonus is number || !data.keys().hasAny(['premiumBonus']))
           && (data.onboardingCompleted is bool || !data.keys().hasAny(['onboardingCompleted']))
-          && data.keys().hasOnly(['username', 'initials', 'accountAge', 'coins', 'isPremium', 'premiumBonus', 'totalPoints', 'onboardingCompleted', 'createdAt', 'lastLogin']);
+          && (data.uid is string || !data.keys().hasAny(['uid']))
+          && (data.referredBy is string || !data.keys().hasAny(['referredBy']))
+          && (data.referralCount is number || !data.keys().hasAny(['referralCount']))
+          && (data.walletAddress is string || !data.keys().hasAny(['walletAddress']))
+          && (data.completedTasks is list || !data.keys().hasAny(['completedTasks']))
+          && data.keys().hasOnly(['username', 'initials', 'accountAge', 'coins', 'isPremium', 'premiumBonus', 'totalPoints', 'onboardingCompleted', 'uid', 'referredBy', 'referralCount', 'walletAddress', 'completedTasks', 'createdAt', 'lastLogin']);
     }
 
     // Validation for Task entity

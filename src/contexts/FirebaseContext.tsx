@@ -6,6 +6,43 @@ import { auth, db, loginWithGoogle } from '../lib/firebase';
 import { UserState } from '../types';
 import { getTelegramUser, estimateAccountAge, getStartParam } from '../lib/telegram';
 
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+  }
+}
+
+const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error:', JSON.stringify(errInfo));
+  return "Failed to sync with database.";
+};
+
 interface FirebaseContextType {
   user: UserState | null;
   loading: boolean;
@@ -42,6 +79,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const fetchUserData = async (firebaseUser: FirebaseUser) => {
+    const path = `users/${firebaseUser.uid}`;
     try {
       const userRef = doc(db, 'users', firebaseUser.uid);
       const userSnap = await getDoc(userRef);
@@ -56,7 +94,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Initial setup for new user
         const tgUser = getTelegramUser();
         const startParam = getStartParam();
-        const age = tgUser ? estimateAccountAge(tgUser.id) : 5; // Default 5 years for preview
+        const age = tgUser ? estimateAccountAge(tgUser.id) : 5;
         const baseCoins = age * 1000;
         const isPremium = tgUser?.is_premium || false;
         const premiumBonus = isPremium ? 5000 : 0;
@@ -91,20 +129,23 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Credit the inviter if applicable
         if (referredBy && referredBy !== firebaseUser.uid) {
           const inviterRef = doc(db, 'users', referredBy);
-          const inviterSnap = await getDoc(inviterRef);
-          if (inviterSnap.exists()) {
-            await updateDoc(inviterRef, {
-              referralCount: increment(1),
-              totalPoints: increment(2500) // Reward for inviter
-            });
+          try {
+            const inviterSnap = await getDoc(inviterRef);
+            if (inviterSnap.exists()) {
+              await updateDoc(inviterRef, {
+                referralCount: increment(1),
+                totalPoints: increment(2500)
+              });
+            }
+          } catch (inviterErr) {
+            console.warn("Failed to credit inviter:", inviterErr);
           }
         }
         
         setUser(newUser);
       }
     } catch (err) {
-      console.error("Error fetching user data:", err);
-      setError("Failed to sync with database.");
+      setError(handleFirestoreError(err, OperationType.GET, path));
     } finally {
       setLoading(false);
     }

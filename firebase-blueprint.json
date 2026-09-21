@@ -13,6 +13,11 @@
         "premiumBonus": { "type": "number" },
         "totalPoints": { "type": "number" },
         "onboardingCompleted": { "type": "boolean" },
+        "uid": { "type": "string" },
+        "referredBy": { "type": "string" },
+        "referralCount": { "type": "number" },
+        "walletAddress": { "type": "string" },
+        "completedTasks": { "type": "array", "items": { "type": "string" } },
         "createdAt": { "type": "string", "format": "date-time" },
         "lastLogin": { "type": "string", "format": "date-time" }
       },
