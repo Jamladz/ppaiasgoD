@@ -15,7 +15,7 @@ export default function Profile({ user, onClose }: ProfileProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: '100%' }}
       transition={{ type: "spring", damping: 30, stiffness: 300 }}
-      className="fixed inset-0 z-[100] bg-zinc-950 flex flex-col max-h-screen overflow-hidden"
+      className="fixed inset-0 z-40 bg-zinc-950 flex flex-col max-h-screen overflow-hidden pb-32"
     >
       <div className="flex items-center justify-between px-6 py-6 sm:py-8">
         <h2 className="text-3xl font-black tracking-tight">Account</h2>
@@ -28,9 +28,9 @@ export default function Profile({ user, onClose }: ProfileProps) {
       </div>
 
       <div className="px-6 flex flex-col items-center pt-2 pb-8 overflow-y-auto">
-        <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-tr from-white to-zinc-400 rounded-full flex items-center justify-center mb-4 sm:mb-6 border-4 border-zinc-900 shadow-[0_20px_50px_rgba(255,255,255,0.05)] relative group">
-          <div className="absolute inset-0 rounded-full bg-white/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <span className="text-4xl font-black text-black relative z-10">{user.initials}</span>
+        <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-br from-sky-400 to-blue-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 shadow-2xl relative group">
+          <div className="absolute inset-0 rounded-full bg-sky-400/20 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
+          <span className="text-4xl font-black text-white relative z-10 tracking-tight">{user.initials}</span>
         </div>
         <h3 className="text-2xl sm:text-3xl font-black mb-1 tracking-tight">@{user.username}</h3>
         <p className="text-zinc-500 font-bold mb-8 sm:mb-10 uppercase tracking-widest text-[10px]">

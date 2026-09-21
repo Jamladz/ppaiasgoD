@@ -256,9 +256,12 @@ export default function MainApp({ user }: MainAppProps) {
 
       <Navigation 
         activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+        setActiveTab={(tab) => {
+          setActiveTab(tab);
+          setIsProfileOpen(false);
+        }} 
         initials={user.initials}
-        onProfileClick={() => setIsProfileOpen(true)}
+        onProfileClick={() => setIsProfileOpen(prev => !prev)}
       />
       
       <AnimatePresence>

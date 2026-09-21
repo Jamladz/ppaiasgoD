@@ -51,9 +51,9 @@ export default function Navigation({ activeTab, setActiveTab, initials, onProfil
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={onProfileClick}
-        className="aspect-square h-[60px] shrink-0 bg-zinc-900/80 backdrop-blur-2xl border border-zinc-800/50 rounded-full flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-2 border-zinc-700/50 hover:border-white/50 transition-all duration-300"
+        className="aspect-square h-[60px] shrink-0 bg-gradient-to-br from-sky-400 to-blue-600 border border-white/10 rounded-full flex items-center justify-center shadow-xl transition-all duration-300"
       >
-        <span className="text-xs font-black tracking-tighter text-zinc-300">{initials}</span>
+        <span className="text-sm font-black tracking-tight text-white">{initials}</span>
       </motion.button>
     </div>
   );

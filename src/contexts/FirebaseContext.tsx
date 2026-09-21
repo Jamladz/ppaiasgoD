@@ -133,6 +133,23 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const baseCoins = age * 1000;
         const isPremium = tgUser?.is_premium || false;
         const premiumBonus = isPremium ? 5000 : 0;
+
+        // Better initials logic (Telegram style)
+        let generatedInitials = 'U';
+        if (tgUser) {
+          if (tgUser.first_name && tgUser.last_name) {
+            generatedInitials = (tgUser.first_name[0] + tgUser.last_name[0]).toUpperCase();
+          } else if (tgUser.first_name) {
+            generatedInitials = tgUser.first_name.substring(0, 2).toUpperCase();
+          }
+        } else if (firebaseUser.displayName) {
+          const names = firebaseUser.displayName.split(' ');
+          if (names.length >= 2) {
+            generatedInitials = (names[0][0] + names[1][0]).toUpperCase();
+          } else {
+            generatedInitials = firebaseUser.displayName.substring(0, 2).toUpperCase();
+          }
+        }
         
         let referredBy = '';
         if (startParam && startParam.startsWith('ref_')) {
@@ -145,7 +162,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const newUser: UserState = {
           uid: firebaseUser.uid,
           username: tgUser?.username || firebaseUser.displayName?.replace(/\s/g, '').toLowerCase() || 'user',
-          initials: (tgUser?.first_name?.[0] || firebaseUser.displayName?.[0] || 'U').toUpperCase(),
+          initials: generatedInitials,
           accountAge: age,
           coins: baseCoins,
           isPremium: isPremium,
