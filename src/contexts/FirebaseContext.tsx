@@ -90,6 +90,9 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ...data,
           completedTasks: data.completedTasks || []
         } as UserState);
+        
+        // Update last login (non-blocking)
+        updateDoc(userRef, { lastLogin: serverTimestamp() }).catch(e => console.warn("Failed to update last login:", e));
       } else {
         // Initial setup for new user
         const tgUser = getTelegramUser();
@@ -144,8 +147,15 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         
         setUser(newUser);
       }
-    } catch (err) {
-      setError(handleFirestoreError(err, OperationType.GET, path));
+      setError(null); // Clear any previous errors on success
+    } catch (err: any) {
+      console.error("Database sync error:", err);
+      // Specific handling for common issues
+      if (err.code === 'permission-denied') {
+        setError("Access denied. Please restart the app.");
+      } else {
+        setError(handleFirestoreError(err, OperationType.GET, path));
+      }
     } finally {
       setLoading(false);
     }
