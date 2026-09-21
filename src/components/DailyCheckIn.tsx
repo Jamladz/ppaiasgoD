@@ -17,7 +17,7 @@ export default function DailyCheckIn({ streakCount, onCheckIn, onClose }: DailyC
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm px-4"
       onClick={onClose}
     >
       <motion.div
@@ -25,7 +25,7 @@ export default function DailyCheckIn({ streakCount, onCheckIn, onClose }: DailyC
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="bg-zinc-900 border-t border-zinc-800 w-full max-w-xl rounded-t-[32px] sm:rounded-t-[40px] p-6 sm:p-8 pb-10 sm:pb-12 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] max-h-[90vh] min-h-[50vh] overflow-y-auto flex flex-col justify-between"
+        className="bg-zinc-900 border-t border-zinc-800 w-full max-w-md rounded-t-[40px] p-8 pb-12 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] max-h-[90vh] min-h-[50vh] overflow-y-auto flex flex-col justify-between"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-12 h-1.5 bg-zinc-800 rounded-full mx-auto mb-8" />
@@ -43,13 +43,24 @@ export default function DailyCheckIn({ streakCount, onCheckIn, onClose }: DailyC
             </div>
             
             <h2 className="text-3xl font-black mb-2 tracking-tight">Daily Check-In</h2>
-            <p className="text-zinc-500 text-sm mb-6 font-medium">
+            <p className="text-zinc-500 text-sm mb-8 font-medium">
               You've been active for <span className="text-white font-black">{streakCount} days</span> in a row!
             </p>
 
-            <div className="flex flex-col items-center justify-center py-4 mb-8">
-              <span className="text-5xl sm:text-6xl font-black tracking-tighter text-white">+{reward.toLocaleString()}</span>
-              <span className="text-[10px] text-amber-400 font-black uppercase tracking-[0.3em] mt-2.5">DOGS</span>
+            <div className="bg-zinc-800/30 border border-zinc-800/50 rounded-[32px] p-6 w-full mb-8 flex items-center justify-between backdrop-blur-xl">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-amber-400/10 rounded-2xl flex items-center justify-center">
+                  <Star className="w-6 h-6 text-amber-400" />
+                </div>
+                <div className="text-left">
+                  <div className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">Today's Reward</div>
+                  <div className="text-xl font-black">{reward.toLocaleString()} DOGS</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 bg-zinc-800/50 px-3 py-1.5 rounded-full border border-zinc-700/30">
+                 <span className="text-xs font-black text-amber-400">{nextStreak}d</span>
+                 <Calendar className="w-3 h-3 text-zinc-500" />
+              </div>
             </div>
           </div>
 
