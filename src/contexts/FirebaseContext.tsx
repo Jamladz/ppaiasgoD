@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as FirebaseUser, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc, increment, query, where, getDocs, collection } from 'firebase/firestore';
 import { auth, db, loginWithGoogle } from '../lib/firebase';
 import { UserState } from '../types';
 import { getTelegramUser, estimateAccountAge, getStartParam } from '../lib/telegram';
@@ -155,6 +155,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
         
         let referredBy = '';
+        let inviterUid = '';
+
         if (startParam && startParam.startsWith('ref_')) {
           referredBy = startParam.replace('ref_', '');
         }
@@ -162,8 +164,26 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Safety check for referral ID format
         const isValidRef = referredBy && /^[a-zA-Z0-9_\-]+$/.test(referredBy);
 
+        if (isValidRef) {
+          // Check if referredBy is a Telegram ID (numeric) or a Firebase UID
+          const isNumeric = /^\d+$/.test(referredBy);
+          
+          if (isNumeric) {
+            // Search for user by telegramId
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('telegramId', '==', parseInt(referredBy)));
+            const querySnap = await getDocs(q);
+            if (!querySnap.empty) {
+              inviterUid = querySnap.docs[0].id;
+            }
+          } else {
+            inviterUid = referredBy;
+          }
+        }
+
         const newUser: UserState = {
           uid: firebaseUser.uid,
+          telegramId: tgUser?.id,
           username: tgUser?.username || firebaseUser.displayName?.replace(/\s/g, '').toLowerCase() || 'user',
           initials: generatedInitials,
           accountAge: age,
@@ -172,7 +192,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           premiumBonus: premiumBonus,
           totalPoints: baseCoins + premiumBonus,
           onboardingCompleted: false,
-          referredBy: referredBy || undefined,
+          referredBy: inviterUid || undefined,
           referralCount: 0,
           walletAddress: '',
           completedTasks: [],
@@ -196,8 +216,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         await setDoc(userRef, dataToSave);
 
         // Credit the inviter if applicable
-        if (isValidRef && referredBy && referredBy !== firebaseUser.uid) {
-          const inviterRef = doc(db, 'users', referredBy);
+        if (inviterUid && inviterUid !== firebaseUser.uid) {
+          const inviterRef = doc(db, 'users', inviterUid);
           try {
             const inviterSnap = await getDoc(inviterRef);
             if (inviterSnap.exists()) {

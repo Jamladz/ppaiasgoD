@@ -22,6 +22,7 @@ export default function MainApp({ user }: MainAppProps) {
   const { updateWalletAddress, completeTask, checkIn } = useFirebase();
   const [verifyingTasks, setVerifyingTasks] = useState<string[]>([]);
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
+  const [isStakingModalOpen, setIsStakingModalOpen] = useState(false);
 
   useEffect(() => {
     // Check if user is eligible for check-in
@@ -53,7 +54,7 @@ export default function MainApp({ user }: MainAppProps) {
     return () => unsubscribe();
   }, [tonConnectUI, updateWalletAddress, completeTask, user.completedTasks]);
 
-  const referralLink = `https://t.me/DogsAIApp_bot?start=ref_${user.uid}`;
+  const referralLink = `https://t.me/DogsAIApp_bot?start=ref_${user.telegramId || user.uid}`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -125,7 +126,7 @@ export default function MainApp({ user }: MainAppProps) {
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center pt-6 px-6 sm:px-8 h-full justify-center"
+            className="flex flex-col items-center pt-6 px-6 sm:px-8 min-h-full pb-28 justify-start"
           >
             <div className="relative mb-8 group">
                <div className="absolute inset-0 bg-white/5 blur-[80px] rounded-full group-hover:bg-white/10 transition-all duration-700" />
@@ -155,6 +156,22 @@ export default function MainApp({ user }: MainAppProps) {
                 </div>
                 <div className="text-xl font-black">#4,201</div>
               </div>
+            </div>
+
+            <div className="w-full max-w-sm mt-6 px-2">
+              <motion.div 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setIsStakingModalOpen(true)}
+                className="relative w-full cursor-pointer group"
+              >
+                <img 
+                  src="https://i.ibb.co/qMmyxmvs/file-000000009b3c8210b371f7b34646ffd5.png" 
+                  alt="Staking Banner" 
+                  className="w-full h-auto rounded-[24px] block"
+                  referrerPolicy="no-referrer"
+                />
+              </motion.div>
             </div>
           </motion.div>
         );
@@ -272,7 +289,7 @@ export default function MainApp({ user }: MainAppProps) {
   return (
     <div className="h-screen bg-zinc-950 text-white overflow-hidden flex flex-col">
       <Header />
-      
+
       <main className="flex-1 overflow-y-auto pb-32">
         {renderTab()}
       </main>
@@ -303,6 +320,62 @@ export default function MainApp({ user }: MainAppProps) {
             onCheckIn={checkIn}
             onClose={() => setIsCheckInOpen(false)}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isStakingModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-end justify-center"
+            onClick={() => setIsStakingModalOpen(false)}
+          >
+            <motion.div 
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-lg bg-zinc-900 border-t border-zinc-800 rounded-t-[40px] p-6 sm:p-8 flex flex-col items-center text-center shadow-2xl relative overflow-hidden touch-none"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-12 h-1.5 bg-zinc-700 rounded-full mb-8" />
+              
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="mb-8"
+              >
+                <img 
+                  src="https://i.ibb.co/ccHf9vwC/ei-1790069735597-removebg-preview.png" 
+                  alt="Staking Logo" 
+                  className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </motion.div>
+
+              <div className="inline-block px-3.5 py-1.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-full text-[11px] font-black uppercase tracking-[0.2em] mb-4">
+                Coming Soon
+              </div>
+
+              <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-3">
+                Staking is Arriving Soon!
+              </h3>
+
+              <p className="text-zinc-400 text-sm sm:text-base leading-relaxed max-w-sm mb-8 font-medium">
+                Lock your DOGS tokens in our secure staking pool to earn high-yield passive rewards and exclusive community perks. Get ready!
+              </p>
+
+              <button
+                onClick={() => setIsStakingModalOpen(false)}
+                className="w-full bg-white text-black py-4 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(255,255,255,0.2)] active:scale-95 transition-transform"
+              >
+                Got It
+              </button>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

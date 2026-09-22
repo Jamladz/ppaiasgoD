@@ -4,6 +4,7 @@ export type Tab = 'home' | 'tasks' | 'friends';
 
 export interface UserState {
   uid: string;
+  telegramId?: number;
   username: string;
   initials: string;
   accountAge: number; // in years
