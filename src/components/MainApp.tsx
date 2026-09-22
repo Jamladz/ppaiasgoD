@@ -54,7 +54,7 @@ export default function MainApp({ user }: MainAppProps) {
     return () => unsubscribe();
   }, [tonConnectUI, updateWalletAddress, completeTask, user.completedTasks]);
 
-  const referralLink = `https://t.me/DogsAIApp_bot?start=ref_${user.telegramId || user.uid}`;
+  const referralLink = `https://t.me/DogsAIApp_bot/app?startapp=ref_${user.telegramId || user.uid}`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -255,6 +255,14 @@ export default function MainApp({ user }: MainAppProps) {
                 >
                   {copied ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <Copy className="w-5 h-5 text-zinc-400" />}
                 </button>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-zinc-800/50">
+                <div className="text-[10px] text-zinc-600 uppercase font-black tracking-[0.2em] mb-2">Your Official ID</div>
+                <div className="inline-flex items-center gap-2 bg-zinc-950/50 px-4 py-2 rounded-xl border border-zinc-800">
+                  <div className="w-1.5 h-1.5 bg-sky-500 rounded-full animate-pulse" />
+                  <code className="text-zinc-400 text-xs font-mono font-bold tracking-wider">{user.telegramId || user.uid.substring(0, 8)}</code>
+                </div>
               </div>
             </div>
             

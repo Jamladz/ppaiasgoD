@@ -17,7 +17,7 @@ export default function DailyCheckIn({ streakCount, onCheckIn, onClose }: DailyC
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-md px-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-md"
       onClick={onClose}
     >
       <motion.div
@@ -25,7 +25,7 @@ export default function DailyCheckIn({ streakCount, onCheckIn, onClose }: DailyC
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="bg-zinc-900 border-t border-zinc-800 w-full max-w-md rounded-t-[40px] p-8 pb-14 shadow-[0_-20px_50px_rgba(0,0,0,0.6)] h-[75vh] flex flex-col overflow-y-auto"
+        className="bg-zinc-900 border-t border-zinc-800 w-full rounded-t-[40px] p-8 pb-14 shadow-[0_-20px_50px_rgba(0,0,0,0.6)] h-[75vh] flex flex-col overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-12 h-1.5 bg-zinc-800 rounded-full mx-auto mb-10" />
