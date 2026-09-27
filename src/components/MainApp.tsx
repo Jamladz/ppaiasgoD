@@ -19,10 +19,17 @@ export default function MainApp({ user }: MainAppProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [tonConnectUI] = useTonConnectUI();
-  const { updateWalletAddress, completeTask, checkIn } = useFirebase();
+  const { updateWalletAddress, completeTask, checkIn, getReferredUsers } = useFirebase();
   const [verifyingTasks, setVerifyingTasks] = useState<string[]>([]);
   const [isCheckInOpen, setIsCheckInOpen] = useState(false);
   const [isStakingModalOpen, setIsStakingModalOpen] = useState(false);
+  const [referredUsers, setReferredUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (activeTab === 'friends') {
+      getReferredUsers().then(setReferredUsers);
+    }
+  }, [activeTab, getReferredUsers]);
 
   useEffect(() => {
     // Check if user is eligible for check-in
@@ -283,11 +290,35 @@ export default function MainApp({ user }: MainAppProps) {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="text-[10px] text-zinc-500 uppercase font-black tracking-[0.2em] ml-2 mb-2">Recent Referrals</h4>
-              <div className="bg-zinc-900/20 border border-zinc-800/30 rounded-[28px] p-8 text-center">
-                <p className="text-zinc-600 text-xs font-bold">No referrals yet. Start inviting!</p>
-              </div>
+            <div className="space-y-3 pb-8">
+              <h4 className="text-[10px] text-zinc-500 uppercase font-black tracking-[0.2em] ml-2 mb-2">Recent Referrals ({referredUsers.length})</h4>
+              {referredUsers.length > 0 ? (
+                <div className="space-y-2">
+                  {referredUsers.map((friend) => (
+                    <div 
+                      key={friend.id}
+                      className="bg-zinc-900/40 border border-zinc-800/50 p-4 rounded-[24px] flex items-center justify-between backdrop-blur-xl"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-zinc-800/50 rounded-full flex items-center justify-center text-xs font-black">
+                          {friend.initials || 'U'}
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm">@{friend.username}</div>
+                          <div className="text-[10px] text-zinc-500 uppercase font-black tracking-wider">
+                            {friend.accountAge || 0} Years • {friend.isPremium ? 'Premium' : 'Standard'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-emerald-400 font-black text-sm">+2.5k</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-zinc-900/20 border border-zinc-800/30 rounded-[28px] p-8 text-center">
+                  <p className="text-zinc-600 text-xs font-bold">No referrals yet. Start inviting!</p>
+                </div>
+              )}
             </div>
           </motion.div>
         );

@@ -55,6 +55,7 @@ interface FirebaseContextType {
   updateWalletAddress: (address: string) => Promise<void>;
   completeTask: (taskId: string, reward: number) => Promise<void>;
   checkIn: () => Promise<void>;
+  getReferredUsers: () => Promise<any[]>;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -81,6 +82,22 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     return () => unsubscribe();
   }, []);
+
+  const getReferredUsers = async () => {
+    if (!user) return [];
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('referredBy', '==', user.uid));
+      const querySnap = await getDocs(q);
+      return querySnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (err) {
+      console.error("Error fetching referred users:", err);
+      return [];
+    }
+  };
 
   const fetchUserData = async (firebaseUser: FirebaseUser) => {
     const path = `users/${firebaseUser.uid}`;
@@ -369,7 +386,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   return (
-    <FirebaseContext.Provider value={{ user, loading, error, signIn, completeOnboarding, updateWalletAddress, completeTask, checkIn }}>
+    <FirebaseContext.Provider value={{ user, loading, error, signIn, completeOnboarding, updateWalletAddress, completeTask, checkIn, getReferredUsers }}>
       {children}
     </FirebaseContext.Provider>
   );
