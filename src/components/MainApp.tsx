@@ -61,7 +61,8 @@ export default function MainApp({ user }: MainAppProps) {
     return () => unsubscribe();
   }, [tonConnectUI, updateWalletAddress, completeTask, user.completedTasks]);
 
-  const referralLink = `https://t.me/DogsAIApp_bot/app?startapp=ref_${user.telegramId || user.uid}`;
+  const botUsername = 'DogsAIApp_bot'; // Official bot username
+  const referralLink = `https://t.me/${botUsername}/app?startapp=ref_${user.telegramId || user.uid}`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -73,12 +74,13 @@ export default function MainApp({ user }: MainAppProps) {
     // @ts-ignore
     const webApp = window.Telegram?.WebApp;
     const text = `Join Dogs Ai and claim your rewards! 🐾`;
-    const fullUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(text)}`;
+    // Official Telegram share URL that opens the app or shows a preview
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(text)}`;
     
     if (webApp) {
-      webApp.openTelegramLink(fullUrl);
+      webApp.openTelegramLink(shareUrl);
     } else {
-      window.open(fullUrl, '_blank');
+      window.open(shareUrl, '_blank');
     }
   };
 
@@ -145,6 +147,28 @@ export default function MainApp({ user }: MainAppProps) {
                />
             </div>
             
+            {/* Wallet Status Button */}
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => tonConnectUI.openModal()}
+              className={`mb-6 px-6 py-2.5 rounded-2xl flex items-center gap-2.5 border transition-all duration-500 backdrop-blur-xl ${
+                user.walletAddress 
+                ? 'bg-sky-500/5 border-sky-500/20 text-sky-400' 
+                : 'bg-white text-black border-white shadow-[0_10px_25px_rgba(255,255,255,0.1)]'
+              }`}
+            >
+              <Wallet className={`w-4 h-4 ${user.walletAddress ? 'text-sky-400' : 'text-black'}`} />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                {user.walletAddress 
+                  ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` 
+                  : 'Connect Wallet'}
+              </span>
+              {user.walletAddress && (
+                <div className="w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse" />
+              )}
+            </motion.button>
+
             <h2 className="text-5xl sm:text-6xl font-black mb-1 tracking-tighter drop-shadow-sm">{user.totalPoints.toLocaleString()}</h2>
             <p className="text-zinc-500 font-black tracking-[0.3em] uppercase text-[10px] mb-8">DOGS TOKEN BALANCE</p>
             
@@ -265,11 +289,17 @@ export default function MainApp({ user }: MainAppProps) {
               </div>
 
               <div className="mt-6 pt-6 border-t border-zinc-800/50">
-                <div className="text-[10px] text-zinc-600 uppercase font-black tracking-[0.2em] mb-2">Your Official ID</div>
-                <div className="inline-flex items-center gap-2 bg-zinc-950/50 px-4 py-2 rounded-xl border border-zinc-800">
-                  <div className="w-1.5 h-1.5 bg-sky-500 rounded-full animate-pulse" />
-                  <code className="text-zinc-400 text-xs font-mono font-bold tracking-wider">{user.telegramId || user.uid.substring(0, 8)}</code>
+                <div className="text-[10px] text-zinc-500 uppercase font-black tracking-[0.2em] mb-3">Your Official Telegram ID</div>
+                <div className="flex items-center justify-center gap-3 bg-zinc-950/50 px-6 py-3 rounded-2xl border border-zinc-800 group/id relative overflow-hidden">
+                  <div className="absolute inset-0 bg-sky-500/5 opacity-0 group-hover/id:opacity-100 transition-opacity" />
+                  <div className="w-2 h-2 bg-sky-500 rounded-full animate-pulse" />
+                  <code className="text-white text-base font-mono font-black tracking-widest relative z-10">
+                    {user.telegramId || 'Not Connected'}
+                  </code>
                 </div>
+                {!user.telegramId && (
+                  <p className="text-[9px] text-amber-500/70 font-bold mt-2 uppercase tracking-tighter">Open in Telegram to see your official ID</p>
+                )}
               </div>
             </div>
             

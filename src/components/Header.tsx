@@ -19,7 +19,7 @@ export default function Header({ }: HeaderProps) {
         <span className="font-black text-lg tracking-tight">Dogs Ai</span>
       </div>
 
-      <div className="scale-90 origin-right">
+      <div className="scale-90 origin-right hidden">
         <TonConnectButton />
       </div>
     </div>
