@@ -5,6 +5,8 @@ import { doc, getDoc, setDoc, serverTimestamp, updateDoc, increment, query, wher
 import { auth, db, loginWithGoogle } from '../lib/firebase';
 import { UserState } from '../types';
 import { getTelegramUser, estimateAccountAge, getStartParam } from '../lib/telegram';
+import { processReferral, identifyInviter } from '../services/referralService';
+import { initializeUser } from '../services/userService';
 
 enum OperationType {
   CREATE = 'create',
@@ -56,6 +58,8 @@ interface FirebaseContextType {
   completeTask: (taskId: string, reward: number) => Promise<void>;
   checkIn: () => Promise<void>;
   getReferredUsers: () => Promise<any[]>;
+  referralBonusReceived: boolean;
+  clearReferralBonus: () => void;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -64,6 +68,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [user, setUser] = useState<UserState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [referralBonusReceived, setReferralBonusReceived] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -132,7 +137,9 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           totalPoints: updatedPoints,
           completedTasks: data.completedTasks || [],
           streakCount: data.streakCount || 0,
-          lastCheckIn: data.lastCheckIn || null
+          lastCheckIn: data.lastCheckIn || null,
+          referralCount: data.referralCount || 0,
+          earnedReferralCoins: data.earnedReferralCoins || 0
         } as UserState;
 
         setUser(updatedUserState);
@@ -172,33 +179,19 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
         
         let referredBy = '';
-        let inviterUid = '';
-
         if (startParam && startParam.startsWith('ref_')) {
           referredBy = startParam.replace('ref_', '');
         }
         
-        // Safety check for referral ID format
-        const isValidRef = referredBy && /^[a-zA-Z0-9_\-]+$/.test(referredBy);
-
-        if (isValidRef) {
-          // Check if referredBy is a Telegram ID (numeric) or a Firebase UID
-          const isNumeric = /^\d+$/.test(referredBy);
-          
-          if (isNumeric) {
-            // Search for user by telegramId
-            const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('telegramId', '==', parseInt(referredBy)));
-            const querySnap = await getDocs(q);
-            if (!querySnap.empty) {
-              inviterUid = querySnap.docs[0].id;
-            }
-          } else {
-            inviterUid = referredBy;
+        let inviterUid = '';
+        if (referredBy) {
+          const foundInviter = await identifyInviter(referredBy);
+          if (foundInviter) {
+            inviterUid = foundInviter;
           }
         }
 
-        const newUser: UserState = {
+        const newUserState: Partial<UserState> = {
           uid: firebaseUser.uid,
           telegramId: tgUser?.id,
           username: tgUser?.username || firebaseUser.displayName?.replace(/\s/g, '').toLowerCase() || 'user',
@@ -211,44 +204,23 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           onboardingCompleted: false,
           referredBy: inviterUid || undefined,
           referralCount: 0,
+          earnedReferralCoins: 0,
           walletAddress: '',
           completedTasks: [],
           streakCount: 0,
           lastCheckIn: null
         };
 
-        const dataToSave = {
-          ...newUser,
-          createdAt: serverTimestamp(),
-          lastLogin: serverTimestamp()
-        };
+        const initializedUser = await initializeUser(firebaseUser.uid, newUserState);
+        setUser(initializedUser);
 
-        // Remove undefined fields to prevent 'invalid-argument'
-        Object.keys(dataToSave).forEach(key => {
-          if ((dataToSave as any)[key] === undefined) {
-            delete (dataToSave as any)[key];
-          }
-        });
-
-        await setDoc(userRef, dataToSave);
-
-        // Credit the inviter if applicable
+        // Credit the inviter using the new referral service
         if (inviterUid && inviterUid !== firebaseUser.uid) {
-          const inviterRef = doc(db, 'users', inviterUid);
-          try {
-            const inviterSnap = await getDoc(inviterRef);
-            if (inviterSnap.exists()) {
-              await updateDoc(inviterRef, {
-                referralCount: increment(1),
-                totalPoints: increment(2500)
-              });
-            }
-          } catch (inviterErr) {
-            console.warn("Failed to credit inviter:", inviterErr);
+          const success = await processReferral(initializedUser, inviterUid);
+          if (success) {
+            setReferralBonusReceived(true);
           }
         }
-        
-        setUser(newUser);
       }
       setError(null); // Clear any previous errors on success
     } catch (err: any) {
@@ -386,7 +358,19 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   return (
-    <FirebaseContext.Provider value={{ user, loading, error, signIn, completeOnboarding, updateWalletAddress, completeTask, checkIn, getReferredUsers }}>
+    <FirebaseContext.Provider value={{ 
+      user, 
+      loading, 
+      error, 
+      signIn, 
+      completeOnboarding, 
+      updateWalletAddress, 
+      completeTask, 
+      checkIn, 
+      getReferredUsers,
+      referralBonusReceived,
+      clearReferralBonus: () => setReferralBonusReceived(false)
+    }}>
       {children}
     </FirebaseContext.Provider>
   );

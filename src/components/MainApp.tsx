@@ -6,6 +6,8 @@ import Header from './Header';
 import Navigation from './Navigation';
 import Profile from './Profile';
 import DailyCheckIn from './DailyCheckIn';
+import ReferralHub from './ReferralHub';
+import { createReferralLink } from '../services/referralService';
 import { CheckCircle2, Circle, TrendingUp, Trophy, Users, Copy, Share2, UserPlus, Wallet } from 'lucide-react';
 import { useTonConnectUI } from '@tonconnect/ui-react';
 import { useFirebase } from '../contexts/FirebaseContext';
@@ -61,8 +63,7 @@ export default function MainApp({ user }: MainAppProps) {
     return () => unsubscribe();
   }, [tonConnectUI, updateWalletAddress, completeTask, user.completedTasks]);
 
-  const botUsername = 'DogsAIApp_bot'; // Official bot username
-  const referralLink = `https://t.me/${botUsername}/app?startapp=ref_${user.telegramId || user.uid}`;
+  const referralLink = createReferralLink(user.telegramId, user.uid);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -258,98 +259,8 @@ export default function MainApp({ user }: MainAppProps) {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-6 sm:p-8"
           >
-            <h2 className="text-2xl font-black mb-6 tracking-tight">Invite Friends</h2>
-            
-            <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-[32px] p-8 mb-6 backdrop-blur-xl text-center relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-              <div className="w-20 h-20 bg-zinc-800/50 rounded-[24px] flex items-center justify-center mx-auto mb-6 text-4xl group-hover:scale-110 transition-transform duration-500">
-                🤝
-              </div>
-              <h3 className="text-xl font-black mb-2">Share the Love</h3>
-              <p className="text-zinc-500 text-xs sm:text-sm mb-8 leading-relaxed font-medium px-4">
-                Earn <span className="text-white">2,500 DOGS</span> for every friend you invite. There's no limit!
-              </p>
-              
-              <div className="flex gap-3">
-                <button 
-                  onClick={shareLink}
-                  className="flex-1 bg-white text-black py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Invite Friend
-                </button>
-                <button 
-                  onClick={copyToClipboard}
-                  className="w-14 h-14 bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/50 rounded-2xl flex items-center justify-center transition-colors active:scale-95"
-                >
-                  {copied ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <Copy className="w-5 h-5 text-zinc-400" />}
-                </button>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-zinc-800/50">
-                <div className="text-[10px] text-zinc-500 uppercase font-black tracking-[0.2em] mb-3">Your Official Telegram ID</div>
-                <div className="flex items-center justify-center gap-3 bg-zinc-950/50 px-6 py-3 rounded-2xl border border-zinc-800 group/id relative overflow-hidden">
-                  <div className="absolute inset-0 bg-sky-500/5 opacity-0 group-hover/id:opacity-100 transition-opacity" />
-                  <div className="w-2 h-2 bg-sky-500 rounded-full animate-pulse" />
-                  <code className="text-white text-base font-mono font-black tracking-widest relative z-10">
-                    {user.telegramId || 'Not Connected'}
-                  </code>
-                </div>
-                {!user.telegramId && (
-                  <p className="text-[9px] text-amber-500/70 font-bold mt-2 uppercase tracking-tighter">Open in Telegram to see your official ID</p>
-                )}
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="bg-zinc-900/40 border border-zinc-800/50 p-6 rounded-[28px] backdrop-blur-xl">
-                <div className="flex items-center gap-2 mb-2.5">
-                  <UserPlus className="w-3.5 h-3.5 text-sky-400" />
-                  <span className="text-[9px] text-zinc-500 uppercase font-black tracking-wider">Total Invited</span>
-                </div>
-                <div className="text-2xl font-black">{user.referralCount || 0}</div>
-              </div>
-              <div className="bg-zinc-900/40 border border-zinc-800/50 p-6 rounded-[28px] backdrop-blur-xl">
-                <div className="flex items-center gap-2 mb-2.5">
-                  <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-[9px] text-zinc-500 uppercase font-black tracking-wider">Earned</span>
-                </div>
-                <div className="text-2xl font-black">{(user.referralCount || 0) * 2500}</div>
-              </div>
-            </div>
-
-            <div className="space-y-3 pb-8">
-              <h4 className="text-[10px] text-zinc-500 uppercase font-black tracking-[0.2em] ml-2 mb-2">Recent Referrals ({referredUsers.length})</h4>
-              {referredUsers.length > 0 ? (
-                <div className="space-y-2">
-                  {referredUsers.map((friend) => (
-                    <div 
-                      key={friend.id}
-                      className="bg-zinc-900/40 border border-zinc-800/50 p-4 rounded-[24px] flex items-center justify-between backdrop-blur-xl"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-zinc-800/50 rounded-full flex items-center justify-center text-xs font-black">
-                          {friend.initials || 'U'}
-                        </div>
-                        <div>
-                          <div className="font-bold text-sm">@{friend.username}</div>
-                          <div className="text-[10px] text-zinc-500 uppercase font-black tracking-wider">
-                            {friend.accountAge || 0} Years • {friend.isPremium ? 'Premium' : 'Standard'}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-emerald-400 font-black text-sm">+2.5k</div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-zinc-900/20 border border-zinc-800/30 rounded-[28px] p-8 text-center">
-                  <p className="text-zinc-600 text-xs font-bold">No referrals yet. Start inviting!</p>
-                </div>
-              )}
-            </div>
+            <ReferralHub user={user} />
           </motion.div>
         );
     }

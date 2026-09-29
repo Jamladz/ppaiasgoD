@@ -47,13 +47,18 @@ service cloud.firestore {
         (isOwner(userId) && incoming().lastLogin == request.time) ||
         
         // Action 2: Referral credit (another user increments points/count)
-        (incoming().diff(existing()).affectedKeys().hasOnly(['referralCount', 'totalPoints']))
+        (incoming().diff(existing()).affectedKeys().hasAny(['referralCount', 'totalPoints', 'earnedReferralCoins']))
       );
       
       match /tasks/{taskId} {
         allow list, get: if isOwner(userId);
         allow create, update: if isOwner(userId) && isValidId(taskId);
       }
+    }
+
+    match /referrals/{referralId} {
+      allow create: if isSignedIn();
+      allow list, get: if isSignedIn() && (isOwner(resource.data.inviterId) || isOwner(resource.data.inviteeId));
     }
   }
 }

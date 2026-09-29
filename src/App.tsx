@@ -7,10 +7,11 @@ import { useEffect } from 'react';
 import { useFirebase } from './contexts/FirebaseContext';
 import Onboarding from './components/Onboarding';
 import MainApp from './components/MainApp';
-import { LogIn, Loader2 } from 'lucide-react';
+import { LogIn, Loader2, PartyPopper } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 
 export default function App() {
-  const { user, loading, error, signIn, completeOnboarding } = useFirebase();
+  const { user, loading, error, signIn, completeOnboarding, referralBonusReceived, clearReferralBonus } = useFirebase();
 
   useEffect(() => {
     // Official Telegram Mini App Fullscreen & Ready Initialization
@@ -82,7 +83,35 @@ export default function App() {
   }
 
   if (user.onboardingCompleted) {
-    return <MainApp user={user} />;
+    return (
+      <>
+        <MainApp user={user} />
+        <AnimatePresence>
+          {referralBonusReceived && (
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed bottom-24 left-6 right-6 z-[100] bg-white text-black p-4 rounded-2xl shadow-2xl flex items-center gap-4"
+            >
+              <div className="w-12 h-12 bg-amber-400/20 rounded-xl flex items-center justify-center text-2xl">
+                🎉
+              </div>
+              <div className="flex-1">
+                <div className="font-black text-sm">Welcome Gift!</div>
+                <div className="text-zinc-600 text-xs font-bold">You received 2,500 DOGS for joining via referral.</div>
+              </div>
+              <button 
+                onClick={clearReferralBonus}
+                className="bg-black text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider"
+              >
+                Got it
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
+    );
   }
 
   return (

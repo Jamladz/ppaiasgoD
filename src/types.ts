@@ -15,10 +15,23 @@ export interface UserState {
   onboardingCompleted: boolean;
   referredBy?: string;
   referralCount: number;
+  earnedReferralCoins: number;
   walletAddress?: string;
   completedTasks: string[];
   streakCount: number;
   lastCheckIn?: any; // Firebase Timestamp or ISO string
+}
+
+export interface ReferralRecord {
+  id: string;
+  inviterId: string; // Firebase UID of the inviter
+  inviteeId: string; // Firebase UID of the new user
+  inviteeUsername: string;
+  inviteeInitials: string;
+  inviteeAccountAge: number;
+  inviteeIsPremium: boolean;
+  rewardAmount: number;
+  timestamp: any;
 }
 
 export interface Task {
