@@ -44,9 +44,17 @@ export default function Profile({ user, onClose }: ProfileProps) {
           <span className="text-4xl font-black text-white relative z-10 tracking-tight">{user.initials}</span>
         </div>
         <h3 className="text-2xl sm:text-3xl font-black mb-1 tracking-tight">@{user.username}</h3>
-        <p className="text-zinc-500 font-bold mb-8 sm:mb-10 uppercase tracking-widest text-[10px]">
-          {user.isPremium ? 'Premium Member' : 'Standard Member'} • ID: {user.uid.slice(0, 8).toUpperCase()}
-        </p>
+        <div className="flex flex-col items-center gap-2 mb-8 sm:mb-10">
+          <p className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">
+            {user.isPremium ? 'Premium Member' : 'Standard Member'}
+          </p>
+          <div className="flex items-center gap-2 bg-zinc-900/50 px-4 py-1.5 rounded-full border border-zinc-800/50">
+            <div className="w-1.5 h-1.5 bg-sky-500 rounded-full animate-pulse" />
+            <span className="text-zinc-400 font-black text-[10px] tracking-widest font-mono uppercase">
+              Official ID: {user.telegramId || 'Not Connected'}
+            </span>
+          </div>
+        </div>
 
         <div className="w-full max-w-sm space-y-4">
           <div 
