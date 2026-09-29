@@ -1,8 +1,10 @@
 
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { UserState } from '../types';
-import { X, Settings, ShieldCheck, Wallet, ExternalLink, LogOut } from 'lucide-react';
+import { X, Settings, ShieldCheck, Wallet, ExternalLink, LogOut, Copy, Share2, CheckCircle2, Users } from 'lucide-react';
 import { useTonConnectUI } from '@tonconnect/ui-react';
+import { createReferralLink } from '../services/referralService';
 
 interface ProfileProps {
   user: UserState;
@@ -11,12 +13,34 @@ interface ProfileProps {
 
 export default function Profile({ user, onClose }: ProfileProps) {
   const [tonConnectUI] = useTonConnectUI();
+  const [copied, setCopied] = useState(false);
+
+  const referralLink = createReferralLink(user.telegramId, user.uid);
 
   const handleWalletAction = () => {
     if (user.walletAddress) {
       tonConnectUI.disconnect();
     } else {
       tonConnectUI.openModal();
+    }
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareLink = () => {
+    // @ts-ignore
+    const webApp = window.Telegram?.WebApp;
+    const text = `Join Dogs Ai and claim your rewards! 🐾`;
+    const fullUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(text)}`;
+    
+    if (webApp) {
+      webApp.openTelegramLink(fullUrl);
+    } else {
+      window.open(fullUrl, '_blank');
     }
   };
 
@@ -94,6 +118,38 @@ export default function Profile({ user, onClose }: ProfileProps) {
             <div className="mt-4 text-[9px] text-zinc-600 font-bold uppercase tracking-wider">Estimated Value: ${(user.totalPoints * 0.00001).toFixed(2)}</div>
           </div>
           
+          <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-[32px] p-6 backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-sky-400" />
+                <span className="font-black text-sm">Referral System</span>
+              </div>
+              <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{user.referralCount || 0} Invited</div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="bg-zinc-950/50 px-4 py-3 rounded-2xl border border-zinc-800/50 truncate text-[10px] font-mono text-zinc-500 mb-4">
+                {referralLink}
+              </div>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={shareLink}
+                  className="flex-1 bg-white text-black py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  Invite
+                </button>
+                <button 
+                  onClick={copyLink}
+                  className="w-12 h-12 bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/50 rounded-2xl flex items-center justify-center transition-colors active:scale-95"
+                >
+                  {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-400" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="h-px bg-zinc-900/50 my-4 sm:my-6" />
 
           <button className="w-full bg-zinc-900/40 hover:bg-zinc-800/60 border border-zinc-800/50 rounded-[32px] p-5 sm:p-6 flex items-center gap-4 transition-all group backdrop-blur-xl">

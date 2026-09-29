@@ -107,122 +107,72 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const fetchUserData = async (firebaseUser: FirebaseUser) => {
     const path = `users/${firebaseUser.uid}`;
     try {
-      const userRef = doc(db, 'users', firebaseUser.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists()) {
-        const data = userSnap.data();
-        const tgUser = getTelegramUser();
-        let updatedAge = data.accountAge;
-        let updatedCoins = data.coins;
-        let updatedPoints = data.totalPoints;
-        let needsUpdate = false;
-
-        // If the user was created with default data (age 5) but we now have real TG data, update it
-        if (tgUser && (data.accountAge === 5 || !data.accountAge)) {
-          const realAge = estimateAccountAge(tgUser.id);
-          if (realAge !== data.accountAge) {
-            updatedAge = realAge;
-            const coinDiff = (realAge - (data.accountAge || 0)) * 1000;
-            updatedCoins = (data.coins || 0) + coinDiff;
-            updatedPoints = (data.totalPoints || 0) + coinDiff;
-            needsUpdate = true;
-          }
-        }
-
-        const updatedUserState = {
-          ...data,
-          accountAge: updatedAge,
-          coins: updatedCoins,
-          totalPoints: updatedPoints,
-          completedTasks: data.completedTasks || [],
-          streakCount: data.streakCount || 0,
-          lastCheckIn: data.lastCheckIn || null,
-          referralCount: data.referralCount || 0,
-          earnedReferralCoins: data.earnedReferralCoins || 0
-        } as UserState;
-
-        setUser(updatedUserState);
-        
-        // Update last login and potentially account age (non-blocking)
-        const updates: any = { lastLogin: serverTimestamp() };
-        if (needsUpdate) {
-          updates.accountAge = updatedAge;
-          updates.coins = updatedCoins;
-          updates.totalPoints = updatedPoints;
-        }
-        updateDoc(userRef, updates).catch(e => console.warn("Failed to update user data:", e));
-      } else {
-        // Initial setup for new user
-        const tgUser = getTelegramUser();
-        const startParam = getStartParam();
-        const age = tgUser ? estimateAccountAge(tgUser.id) : 5;
-        const baseCoins = age * 1000;
-        const isPremium = tgUser?.is_premium || false;
-        const premiumBonus = isPremium ? 5000 : 0;
-
-        // Better initials logic (Telegram style)
-        let generatedInitials = 'U';
-        if (tgUser) {
-          if (tgUser.first_name && tgUser.last_name) {
-            generatedInitials = (tgUser.first_name[0] + tgUser.last_name[0]).toUpperCase();
-          } else if (tgUser.first_name) {
-            generatedInitials = tgUser.first_name.substring(0, 2).toUpperCase();
-          }
-        } else if (firebaseUser.displayName) {
-          const names = firebaseUser.displayName.split(' ');
-          if (names.length >= 2) {
-            generatedInitials = (names[0][0] + names[1][0]).toUpperCase();
-          } else {
-            generatedInitials = firebaseUser.displayName.substring(0, 2).toUpperCase();
-          }
-        }
-        
-        let referredBy = '';
-        if (startParam && startParam.startsWith('ref_')) {
-          referredBy = startParam.replace('ref_', '');
-        }
-        
-        let inviterUid = '';
-        if (referredBy) {
-          const foundInviter = await identifyInviter(referredBy);
-          if (foundInviter) {
-            inviterUid = foundInviter;
-          }
-        }
-
-        const newUserState: Partial<UserState> = {
-          uid: firebaseUser.uid,
-          telegramId: tgUser?.id,
-          username: tgUser?.username || firebaseUser.displayName?.replace(/\s/g, '').toLowerCase() || 'user',
-          initials: generatedInitials,
-          accountAge: age,
-          coins: baseCoins,
-          isPremium: isPremium,
-          premiumBonus: premiumBonus,
-          totalPoints: baseCoins + premiumBonus,
-          onboardingCompleted: false,
-          referredBy: inviterUid || undefined,
-          referralCount: 0,
-          earnedReferralCoins: 0,
-          walletAddress: '',
-          completedTasks: [],
-          streakCount: 0,
-          lastCheckIn: null
-        };
-
-        const initializedUser = await initializeUser(firebaseUser.uid, newUserState);
-        setUser(initializedUser);
-
-        // Credit the inviter using the new referral service
-        if (inviterUid && inviterUid !== firebaseUser.uid) {
-          const success = await processReferral(initializedUser, inviterUid);
-          if (success) {
-            setReferralBonusReceived(true);
-          }
+      const tgUser = getTelegramUser();
+      const startParam = getStartParam();
+      
+      // Determine referral info
+      let referredBy = '';
+      if (startParam && startParam.startsWith('ref_')) {
+        referredBy = startParam.replace('ref_', '');
+      }
+      
+      let inviterUid = '';
+      if (referredBy) {
+        const foundInviter = await identifyInviter(referredBy);
+        if (foundInviter) {
+          inviterUid = foundInviter;
         }
       }
-      setError(null); // Clear any previous errors on success
+
+      // Calculate initial points/age if new
+      const age = tgUser ? estimateAccountAge(tgUser.id) : 5;
+      const baseCoins = age * 1000;
+      const isPremium = tgUser?.is_premium || false;
+      const premiumBonus = isPremium ? 5000 : 0;
+
+      // Initials
+      let generatedInitials = 'U';
+      if (tgUser) {
+        if (tgUser.first_name && tgUser.last_name) {
+          generatedInitials = (tgUser.first_name[0] + tgUser.last_name[0]).toUpperCase();
+        } else if (tgUser.first_name) {
+          generatedInitials = tgUser.first_name.substring(0, 2).toUpperCase();
+        }
+      } else if (firebaseUser.displayName) {
+        const names = firebaseUser.displayName.split(' ');
+        if (names.length >= 2) {
+          generatedInitials = (names[0][0] + names[1][0]).toUpperCase();
+        } else {
+          generatedInitials = firebaseUser.displayName.substring(0, 2).toUpperCase();
+        }
+      }
+
+      const userDataToInit: Partial<UserState> = {
+        uid: firebaseUser.uid,
+        telegramId: tgUser?.id,
+        username: tgUser?.username || firebaseUser.displayName?.replace(/\s/g, '').toLowerCase() || 'user',
+        initials: generatedInitials,
+        accountAge: age,
+        coins: baseCoins,
+        isPremium: isPremium,
+        premiumBonus: premiumBonus,
+        totalPoints: baseCoins + premiumBonus,
+        referredBy: inviterUid || undefined
+      };
+
+      // initializeUser handles finding existing user by telegramId OR creating new one
+      const initializedUser = await initializeUser(firebaseUser.uid, userDataToInit);
+      
+      // Strict Referral Processing: only if user is truly new
+      if ((initializedUser as any).isNew && inviterUid && inviterUid !== firebaseUser.uid) {
+        const success = await processReferral(initializedUser, inviterUid);
+        if (success) {
+          setReferralBonusReceived(true);
+        }
+      }
+
+      setUser(initializedUser);
+      setError(null);
     } catch (err: any) {
       console.error("Database sync error details:", err);
       // Detailed error logging for invalid-argument
